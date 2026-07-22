@@ -1,5 +1,6 @@
 // ===============================
 // Momentum - app.js
+// v0.3.1
 // ===============================
 
 // Elementos da página
@@ -32,7 +33,7 @@ focus.addEventListener("input", () => {
 });
 
 // -------------------------------
-// Barra de progresso
+// Atualiza a barra de progresso
 // -------------------------------
 function atualizarProgresso() {
 
@@ -46,18 +47,16 @@ function atualizarProgresso() {
 
     const concluidas = [...checks].filter(c => c.checked).length;
 
-    const percentual = Math.round(
-        concluidas / checks.length * 100
-    );
+    const percentual = Math.round((concluidas / checks.length) * 100);
 
     progressBar.style.width = percentual + "%";
     progressText.textContent = percentual + "%";
 }
 
 // -------------------------------
-// Adicionar tarefa
+// Cria uma tarefa
 // -------------------------------
-addTask.addEventListener("click", () => {
+function criarTarefa(descricao) {
 
     const linha = document.createElement("div");
     linha.className = "task";
@@ -65,11 +64,12 @@ addTask.addEventListener("click", () => {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
 
-    const texto = document.createElement("input");
-    texto.type = "text";
-    texto.placeholder = "Nova tarefa";
-
     checkbox.addEventListener("change", atualizarProgresso);
+
+    const texto = document.createElement("span");
+    texto.textContent = descricao;
+    texto.style.flex = "1";
+    texto.style.padding = "6px 0";
 
     linha.appendChild(checkbox);
     linha.appendChild(texto);
@@ -77,8 +77,24 @@ addTask.addEventListener("click", () => {
     tasks.appendChild(linha);
 
     atualizarProgresso();
+}
+
+// -------------------------------
+// Botão Nova tarefa
+// -------------------------------
+addTask.addEventListener("click", () => {
+
+    const descricao = prompt("Digite a nova tarefa:");
+
+    if (!descricao) return;
+
+    if (descricao.trim() === "") return;
+
+    criarTarefa(descricao.trim());
 
 });
 
-// Estado inicial
+// -------------------------------
+// Inicialização
+// -------------------------------
 atualizarProgresso();
