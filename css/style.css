@@ -1,141 +1,94 @@
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-
-background:#F5F5F7;
-font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-
-color:#222;
-
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    background: #F2F2F7;
+    color: #1C1C1E;
 }
 
-.app{
-
-max-width:430px;
-margin:auto;
-padding:20px;
-
+.app {
+    max-width: 430px;
+    margin: auto;
+    min-height: 100vh;
+    padding: 24px 20px 100px;
 }
 
-.header{
-
-margin:30px 0;
-
+header {
+    margin-bottom: 30px;
 }
 
-.header h1{
-
-font-size:38px;
-font-weight:700;
-
+h1 {
+    font-size: 34px;
+    font-weight: 700;
 }
 
-.header p{
-
-color:#777;
-
+#today {
+    color: #8E8E93;
+    margin-top: 6px;
 }
 
-.card{
-
-background:white;
-
-border-radius:24px;
-
-padding:20px;
-
-margin-bottom:20px;
-
-box-shadow:0 10px 30px rgba(0,0,0,.06);
-
+.card {
+    background: white;
+    border-radius: 22px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.08);
 }
 
-input{
+.card h2{
+    font-size:18px;
+    margin-bottom:15px;
+}
 
-width:100%;
-
-padding:14px;
-
-margin-top:15px;
-
-border:none;
-
-border-radius:14px;
-
-background:#EFEFF4;
-
-font-size:16px;
-
+input[type=text]{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:#F2F2F7;
+    font-size:16px;
 }
 
 button{
-
-margin-top:20px;
-
-width:100%;
-
-padding:15px;
-
-background:#007AFF;
-
-color:white;
-
-border:none;
-
-border-radius:14px;
-
-font-size:16px;
-
+    width:100%;
+    margin-top:15px;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:#007AFF;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
 }
 
 .task{
-
-display:flex;
-
-gap:10px;
-
-margin-top:15px;
-
+    display:flex;
+    gap:10px;
+    margin-top:10px;
 }
 
 footer{
-
-position:fixed;
-
-bottom:0;
-
-left:0;
-
-width:100%;
-
-background:white;
-
-display:flex;
-
-justify-content:space-around;
-
-padding:18px;
-
-box-shadow:0 -5px 20px rgba(0,0,0,.08);
-
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    background:white;
+    border-top:1px solid #E5E5EA;
+    display:flex;
+    justify-content:space-around;
+    padding:18px;
 }
 
 .tab{
-
-color:#888;
-
+    color:#8E8E93;
 }
 
-.active{
-
-color:#007AFF;
-
-font-weight:600;
-
+.tab.active{
+    color:#007AFF;
+    font-weight:600;
 }
