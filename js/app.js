@@ -30,3 +30,48 @@ addTaskButton.addEventListener("click", () => {
     tasks.appendChild(task);
 
 });
+function atualizarProgresso(){
+
+const checks =
+document.querySelectorAll(
+'.task input[type="checkbox"]'
+);
+
+if(checks.length===0){
+
+progressBar.style.width="0%";
+progressText.textContent="0%";
+
+return;
+
+}
+
+const marcados =
+[...checks]
+.filter(c=>c.checked)
+.length;
+
+const percentual =
+Math.round(
+marcados/checks.length*100
+);
+
+progressBar.style.width=
+percentual+"%";
+
+progressText.textContent=
+percentual+"%";
+
+}
+
+document
+.addEventListener(
+"change",
+atualizarProgresso
+);
+
+const progressBar =
+document.getElementById("progressBar");
+
+const progressText =
+document.getElementById("progressText");
