@@ -1,29 +1,32 @@
+// Exibe a data atual
 const today = document.getElementById("today");
 
-today.innerText =
-new Date().toLocaleDateString("pt-BR",
-{
-weekday:"long",
-day:"numeric",
-month:"long"
-});
-
-const tasks = document.getElementById("tasks");
-
-document
-.getElementById("addTask")
-.onclick=()=>{
-
-const div=document.createElement("div");
-
-div.className="task";
-
-div.innerHTML=`
-<input type="checkbox">
-<input type="text"
-placeholder="Nova tarefa">
-`;
-
-tasks.appendChild(div);
-
+const options = {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
 };
+
+today.textContent =
+new Date().toLocaleDateString("pt-BR", options);
+
+// Elementos da tela
+const tasks = document.getElementById("tasks");
+const addTaskButton = document.getElementById("addTask");
+
+// Adiciona uma nova tarefa
+addTaskButton.addEventListener("click", () => {
+
+    const task = document.createElement("div");
+    task.className = "task";
+
+    task.innerHTML = `
+        <input type="checkbox">
+        <input
+            type="text"
+            placeholder="Digite uma tarefa">
+    `;
+
+    tasks.appendChild(task);
+
+});
