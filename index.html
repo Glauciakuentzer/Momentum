@@ -1,11 +1,70 @@
-<section class="card">
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-<h2>✅ Tarefas</h2>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum</title>
 
-<div id="tasks"></div>
+    <link rel="stylesheet" href="css/style.css">
+</head>
 
-<button id="addTask">
-Nova tarefa
-</button>
+<body>
 
-</section>
+<div class="app">
+
+    <header>
+        <h1>Momentum</h1>
+        <p id="today"></p>
+    </header>
+
+    <section class="card">
+        <h2>🎯 Foco do dia</h2>
+
+        <input
+            type="text"
+            id="focus"
+            placeholder="Qual é o objetivo principal de hoje?">
+    </section>
+
+    <section class="card">
+
+        <h2>📈 Progresso do dia</h2>
+
+        <div class="progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <p id="progressText">0%</p>
+
+    </section>
+
+    <section class="card">
+
+        <h2>✅ Tarefas</h2>
+
+        <div id="tasks"></div>
+
+        <button id="addTask">
+            + Nova tarefa
+        </button>
+
+    </section>
+
+    <footer>
+
+        <div class="tab active">🏠 Hoje</div>
+        <div class="tab">📅 Semana</div>
+        <div class="tab">📚 Estudos</div>
+        <div class="tab">📁 Projetos</div>
+
+    </footer>
+
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+
+</html>
