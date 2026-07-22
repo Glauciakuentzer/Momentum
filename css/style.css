@@ -4,34 +4,29 @@
     padding: 0;
     box-sizing: border-box;
 }
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     background: #F2F2F7;
     color: #1C1C1E;
 }
-
 .app {
     max-width: 430px;
     margin: auto;
     min-height: 100vh;
     padding: 24px 20px 100px;
 }
-
 header {
     margin-bottom: 30px;
 }
-
 h1 {
     font-size: 34px;
     font-weight: 700;
 }
-
 #today {
     color: #8E8E93;
     margin-top: 6px;
+    text-transform: capitalize;
 }
-
 .card {
     background: white;
     border-radius: 22px;
@@ -39,12 +34,10 @@ h1 {
     margin-bottom: 20px;
     box-shadow: 0 8px 30px rgba(0,0,0,.08);
 }
-
 .card h2{
     font-size:18px;
     margin-bottom:15px;
 }
-
 input[type=text]{
     width:100%;
     padding:14px;
@@ -53,7 +46,6 @@ input[type=text]{
     background:#F2F2F7;
     font-size:16px;
 }
-
 button{
     width:100%;
     margin-top:15px;
@@ -65,13 +57,24 @@ button{
     font-size:16px;
     cursor:pointer;
 }
-
 .task{
     display:flex;
+    align-items:center;
     gap:10px;
     margin-top:10px;
 }
-
+.task input[type=text]{
+    flex:1;
+}
+.task-delete{
+    width:auto;
+    margin-top:0;
+    padding:6px 10px;
+    background:none;
+    color:#FF3B30;
+    font-size:16px;
+    flex-shrink:0;
+}
 footer{
     position:fixed;
     bottom:0;
@@ -83,11 +86,11 @@ footer{
     justify-content:space-around;
     padding:18px;
 }
-
 .tab{
     color:#8E8E93;
+    cursor:pointer;
+    font-size:14px;
 }
-
 .tab.active{
     color:#007AFF;
     font-weight:600;
@@ -107,11 +110,136 @@ footer{
     transition: width .3s ease;
 }
 #progressText{
+    margin-top:12px;
+    font-weight:600;
+    color:#666;
+}
 
-margin-top:12px;
+/* ===== Views ===== */
+.view{ display:none; }
+.view.active{ display:block; }
 
-font-weight:600;
+/* ===== Tags (Estudo / Leitura / Trabalho / Rotina) ===== */
+.tag{
+    display:inline-block;
+    margin-top:6px;
+    font-size:11px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:100px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+}
+.tag.estudo{ background:rgba(0,122,255,.12); color:#007AFF; }
+.tag.leitura{ background:rgba(255,149,0,.12); color:#FF9500; }
+.tag.trabalho{ background:rgba(142,142,147,.14); color:#8E8E93; }
+.tag.rotina{ background:rgba(142,142,147,.10); color:#AEAEB2; }
 
-color:#666;
+/* ===== Semana ===== */
+.day-pills{
+    display:flex;
+    gap:6px;
+    margin-bottom:16px;
+}
+.pill{
+    flex:1;
+    text-align:center;
+    padding:9px 0;
+    border-radius:12px;
+    background:#F2F2F7;
+    color:#8E8E93;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+}
+.pill.active{
+    background:#007AFF;
+    color:white;
+}
+.check-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid #F2F2F7;
+}
+.check-item:last-child{ border-bottom:none; }
+.check-item input[type=checkbox]{
+    width:20px;
+    height:20px;
+    flex-shrink:0;
+}
+.check-body .check-time{
+    font-size:11.5px;
+    color:#8E8E93;
+    font-weight:600;
+}
+.check-body .check-label{
+    font-size:14.5px;
+    font-weight:600;
+    margin-top:1px;
+}
 
+.bars{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    height:70px;
+    margin-top:5px;
+}
+.bar-col{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height:100%;
+}
+.bar{
+    width:100%;
+    background:#E5E5EA;
+    border-radius:6px 6px 3px 3px;
+}
+.bar.has-progress{ background:#34C759; }
+.bar-label{
+    font-size:10.5px;
+    color:#8E8E93;
+    margin-top:6px;
+    font-weight:700;
+}
+.week-total{
+    margin-top:14px;
+    font-weight:700;
+    color:#34C759;
+    font-size:15px;
+}
+
+/* ===== Estudos (timeline) ===== */
+.timeline-item{
+    position:relative;
+    padding:12px 0 12px 20px;
+    border-left:3px solid #E5E5EA;
+    margin-left:5px;
+}
+.timeline-item.current{ border-left-color:#007AFF; }
+.timeline-item.cat-estudo{ border-left-color:#007AFF; }
+.timeline-item.cat-leitura{ border-left-color:#FF9500; }
+.timeline-item::before{
+    content:'';
+    position:absolute;
+    left:-8px;
+    top:18px;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#E5E5EA;
+}
+.timeline-item.cat-estudo::before{ background:#007AFF; }
+.timeline-item.cat-leitura::before{ background:#FF9500; }
+.timeline-item.cat-trabalho::before{ background:#8E8E93; }
+.now-badge{
+    float:right;
+    font-size:10px;
+    font-weight:800;
+    color:#34C759;
 }
