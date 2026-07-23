@@ -371,3 +371,72 @@ renderizarChecklist();
 renderizarResumoSemana();
 renderizarSequencia();
 atualizarProgressoDoDia();
+
+/* ===================== HISTÓRICO DO MÊS (mapa de calor) ===================== */
+let mesExibido = new Date();
+mesExibido.setDate(1);
+
+function nomeMes(d) {
+    return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+function renderizarHeatmap() {
+    document.getElementById("mesLabel").textContent = nomeMes(mesExibido);
+
+    const ano = mesExibido.getFullYear();
+    const mes = mesExibido.getMonth();
+    const primeiroDia = new Date(ano, mes, 1);
+    const ultimoDia = new Date(ano, mes + 1, 0);
+    const totalDias = ultimoDia.getDate();
+    const offsetInicio = (primeiroDia.getDay() + 6) % 7; // 0 = segunda
+
+    let html = "";
+    for (let i = 0; i < offsetInicio; i++) {
+        html += '<div class="heatmap-day empty"></div>';
+    }
+    for (let dia = 1; dia <= totalDias; dia++) {
+        const dataObj = new Date(ano, mes, dia);
+        const iso = dataISO(dataObj);
+        const estado = historico[iso] || {};
+        const concluidos = blocosRastreaveis.filter((b) => estado[b.id]).length;
+
+        let nivel = "level-0";
+        if (concluidos >= blocosRastreaveis.length) nivel = "perfect";
+        else if (concluidos >= 5) nivel = "level-3";
+        else if (concluidos >= 3) nivel = "level-2";
+        else if (concluidos >= 1) nivel = "level-1";
+
+        html += `<div class="heatmap-day ${nivel}" data-date="${iso}" data-count="${concluidos}"></div>`;
+    }
+
+    const container = document.getElementById("heatmap");
+    container.innerHTML = html;
+
+    container.querySelectorAll(".heatmap-day:not(.empty)").forEach((celula) => {
+        celula.addEventListener("click", () => {
+            const [, m, d] = celula.dataset.date.split("-");
+            const count = celula.dataset.count;
+            document.getElementById("heatmapInfo").textContent =
+                `${d}/${m}: ${count} de ${blocosRastreaveis.length} blocos cumpridos`;
+        });
+    });
+}
+
+document.getElementById("mesAnterior").addEventListener("click", () => {
+    mesExibido.setMonth(mesExibido.getMonth() - 1);
+    renderizarHeatmap();
+});
+
+document.getElementById("mesProximo").addEventListener("click", () => {
+    const proximo = new Date(mesExibido);
+    proximo.setMonth(proximo.getMonth() + 1);
+    const agora = new Date();
+    const alemDoAtual =
+        proximo.getFullYear() > agora.getFullYear() ||
+        (proximo.getFullYear() === agora.getFullYear() && proximo.getMonth() > agora.getMonth());
+    if (alemDoAtual) return;
+    mesExibido = proximo;
+    renderizarHeatmap();
+});
+
+renderizarHeatmap();
