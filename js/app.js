@@ -30,6 +30,8 @@ function catLabel(cat) {
 function aplicarTema(escuro) {
     document.documentElement.setAttribute("data-theme", escuro ? "dark" : "light");
     document.getElementById("themeToggle").textContent = escuro ? "☀️" : "🌙";
+    const metaTema = document.querySelector('meta[name="theme-color"]');
+    if (metaTema) metaTema.setAttribute("content", escuro ? "#000000" : "#F2F2F7");
 }
 
 const prefereEscuroPorPadrao = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -41,6 +43,15 @@ document.getElementById("themeToggle").addEventListener("click", () => {
     salvar("tema-escuro", temaEscuro);
     aplicarTema(temaEscuro);
 });
+
+/* ===================== PWA: registro do service worker ===================== */
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js").catch((erro) => {
+            console.error("Falha ao registrar service worker:", erro);
+        });
+    });
+}
 
 /* ===================== Data de hoje ===================== */
 const today = document.getElementById("today");
