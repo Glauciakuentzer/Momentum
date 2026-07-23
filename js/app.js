@@ -26,6 +26,22 @@ function catLabel(cat) {
     return { estudo: "Estudo", leitura: "Leitura", trabalho: "Trabalho", rotina: "Rotina" }[cat];
 }
 
+/* ===================== Tema (claro/escuro) ===================== */
+function aplicarTema(escuro) {
+    document.documentElement.setAttribute("data-theme", escuro ? "dark" : "light");
+    document.getElementById("themeToggle").textContent = escuro ? "☀️" : "🌙";
+}
+
+const prefereEscuroPorPadrao = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+let temaEscuro = carregar("tema-escuro", prefereEscuroPorPadrao);
+aplicarTema(temaEscuro);
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+    temaEscuro = !temaEscuro;
+    salvar("tema-escuro", temaEscuro);
+    aplicarTema(temaEscuro);
+});
+
 /* ===================== Data de hoje ===================== */
 const today = document.getElementById("today");
 today.innerText = new Date().toLocaleDateString("pt-BR", {
