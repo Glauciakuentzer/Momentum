@@ -18,6 +18,14 @@ function paraMinutos(hhmm) {
     return h * 60 + m;
 }
 
+function dataISO(d) {
+    return d.toISOString().split("T")[0];
+}
+
+function catLabel(cat) {
+    return { estudo: "Estudo", leitura: "Leitura", trabalho: "Trabalho", rotina: "Rotina" }[cat];
+}
+
 /* ===================== Data de hoje ===================== */
 const today = document.getElementById("today");
 today.innerText = new Date().toLocaleDateString("pt-BR", {
@@ -99,7 +107,7 @@ const focusKey = chaveDoDia("foco");
 focusInput.value = carregar(focusKey, "");
 focusInput.addEventListener("input", () => salvar(focusKey, focusInput.value));
 
-/* ===================== HOJE: Progresso (calculado a partir dos blocos de hoje, ver seção SEMANA) ===================== */
+/* ===================== HOJE: Progresso (calculado a partir dos blocos de hoje) ===================== */
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
 
@@ -116,42 +124,57 @@ criarGerenciadorDeTarefas(
     "projetos-tarefas"
 );
 
-/* ===================== ESTUDOS: rotina do dia ===================== */
-const dayBlocks = [
-    { start: "05:15", end: "05:30", label: "Acordar / preparar café", cat: "rotina" },
-    { start: "05:30", end: "05:55", label: "Leitura de lazer", cat: "leitura" },
-    { start: "05:55", end: "06:00", label: "Preparar para a academia", cat: "rotina" },
-    { start: "06:00", end: "07:30", label: "Academia", cat: "rotina" },
-    { start: "07:30", end: "08:30", label: "Banho / café / arrumar para o trabalho", cat: "rotina" },
-    { start: "08:30", end: "09:00", label: "Trajeto — aula em áudio / podcast", cat: "estudo" },
-    { start: "09:00", end: "12:15", label: "Trabalho (manhã)", cat: "trabalho" },
-    { start: "12:15", end: "12:45", label: "Estudo focado (curso / idioma)", cat: "estudo" },
-    { start: "12:45", end: "13:30", label: "Almoço", cat: "rotina" },
-    { start: "13:30", end: "18:00", label: "Trabalho (tarde)", cat: "trabalho" },
-    { start: "18:10", end: "18:50", label: "Trajeto — aula em áudio / podcast", cat: "estudo" },
-    { start: "18:50", end: "20:00", label: "Chegar / jantar / descomprimir", cat: "rotina" },
-    { start: "20:00", end: "20:45", label: "Estudo focado (bloco principal)", cat: "estudo" },
-    { start: "20:45", end: "21:40", label: "Tempo livre", cat: "rotina" },
-    { start: "21:40", end: "22:00", label: "Leitura de lazer", cat: "leitura" },
+/* ===================== ROTINA DO DIA (fonte única — editável em Ajustes) ===================== */
+const ROTINA_PADRAO = [
+    { id: "acordar-cafe", start: "05:15", end: "05:30", label: "Acordar / preparar café", cat: "rotina", rastreavel: false },
+    { id: "leitura-manha", start: "05:30", end: "05:55", label: "Leitura de lazer", cat: "leitura", rastreavel: true },
+    { id: "preparar-academia", start: "05:55", end: "06:00", label: "Preparar para a academia", cat: "rotina", rastreavel: false },
+    { id: "academia", start: "06:00", end: "07:30", label: "Academia", cat: "rotina", rastreavel: false },
+    { id: "banho-arrumar", start: "07:30", end: "08:30", label: "Banho / café / arrumar para o trabalho", cat: "rotina", rastreavel: false },
+    { id: "estudo-trajeto-manha", start: "08:30", end: "09:00", label: "Trajeto — aula em áudio / podcast", cat: "estudo", rastreavel: true },
+    { id: "trabalho-manha", start: "09:00", end: "12:15", label: "Trabalho (manhã)", cat: "trabalho", rastreavel: false },
+    { id: "estudo-almoco", start: "12:15", end: "12:45", label: "Estudo focado (curso / idioma)", cat: "estudo", rastreavel: true },
+    { id: "almoco", start: "12:45", end: "13:30", label: "Almoço", cat: "rotina", rastreavel: false },
+    { id: "trabalho-tarde", start: "13:30", end: "18:00", label: "Trabalho (tarde)", cat: "trabalho", rastreavel: false },
+    { id: "estudo-trajeto-volta", start: "18:10", end: "18:50", label: "Trajeto — aula em áudio / podcast", cat: "estudo", rastreavel: true },
+    { id: "chegar-jantar", start: "18:50", end: "20:00", label: "Chegar / jantar / descomprimir", cat: "rotina", rastreavel: false },
+    { id: "estudo-noite", start: "20:00", end: "20:45", label: "Estudo focado (bloco principal)", cat: "estudo", rastreavel: true },
+    { id: "tempo-livre", start: "20:45", end: "21:40", label: "Tempo livre", cat: "rotina", rastreavel: false },
+    { id: "leitura-noite", start: "21:40", end: "22:00", label: "Leitura de lazer", cat: "leitura", rastreavel: true },
 ];
 
-function catLabel(cat) {
-    return { estudo: "Estudo", leitura: "Leitura", trabalho: "Trabalho", rotina: "Rotina" }[cat];
+let rotina = carregar("rotina-blocos", null);
+if (!rotina) {
+    rotina = JSON.parse(JSON.stringify(ROTINA_PADRAO));
+    salvar("rotina-blocos", rotina);
 }
 
+function salvarRotina() {
+    salvar("rotina-blocos", rotina);
+}
+
+function blocosOrdenados() {
+    return [...rotina].sort((a, b) => paraMinutos(a.start) - paraMinutos(b.start));
+}
+
+function blocosAtivos() {
+    return blocosOrdenados().filter((b) => b.rastreavel);
+}
+
+/* ===================== ESTUDOS: rotina do dia ===================== */
 function renderizarTimeline() {
     const container = document.getElementById("timeline");
     const agora = new Date();
     const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
 
-    container.innerHTML = dayBlocks
+    container.innerHTML = blocosOrdenados()
         .map((b) => {
             const isNow = minutosAgora >= paraMinutos(b.start) && minutosAgora < paraMinutos(b.end);
             return `
                 <div class="timeline-item cat-${b.cat} ${isNow ? "current" : ""}">
                     ${isNow ? '<span class="now-badge">AGORA</span>' : ""}
                     <div class="check-time">${b.start} – ${b.end}</div>
-                    <div class="check-label">${b.label}</div>
+                    <div class="check-label">${escapeHtml(b.label)}</div>
                     <span class="tag ${b.cat}">${catLabel(b.cat)}</span>
                 </div>`;
         })
@@ -163,19 +186,6 @@ setInterval(renderizarTimeline, 60000); // atualiza o destaque "AGORA" a cada mi
 
 /* ===================== SEMANA: acompanhamento (por data, permite sequência) ===================== */
 const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
-const blocosRastreaveis = [
-    { id: "leitura-manha", label: "Leitura de lazer", time: "05:30–05:55", duracao: 25, cat: "leitura" },
-    { id: "estudo-trajeto-manha", label: "Estudo em áudio (trajeto)", time: "08:30–09:00", duracao: 30, cat: "estudo" },
-    { id: "estudo-almoco", label: "Estudo focado (almoço)", time: "12:15–12:45", duracao: 30, cat: "estudo" },
-    { id: "estudo-trajeto-volta", label: "Estudo em áudio (trajeto)", time: "18:10–18:50", duracao: 40, cat: "estudo" },
-    { id: "estudo-noite", label: "Estudo focado (noite)", time: "20:00–20:45", duracao: 45, cat: "estudo" },
-    { id: "leitura-noite", label: "Leitura de lazer", time: "21:40–22:00", duracao: 20, cat: "leitura" },
-];
-
-function dataISO(d) {
-    return d.toISOString().split("T")[0];
-}
 
 function inicioDaSemana(d) {
     const copia = new Date(d);
@@ -222,14 +232,17 @@ function diaCumprido(dataStr) {
 function diaPerfeito(dataStr) {
     const estado = historico[dataStr];
     if (!estado) return false;
-    return blocosRastreaveis.every((b) => estado[b.id]);
+    const ativos = blocosAtivos();
+    if (ativos.length === 0) return false;
+    return ativos.every((b) => estado[b.id]);
 }
 
 function atualizarProgressoDoDia() {
     const hojeISO = dataISO(new Date());
     const estado = historico[hojeISO] || {};
-    const total = blocosRastreaveis.length;
-    const feitos = blocosRastreaveis.filter((b) => estado[b.id]).length;
+    const ativos = blocosAtivos();
+    const total = ativos.length;
+    const feitos = ativos.filter((b) => estado[b.id]).length;
     const pct = total === 0 ? 0 : Math.round((feitos / total) * 100);
     progressBar.style.width = pct + "%";
     progressText.textContent = pct + "%";
@@ -301,15 +314,22 @@ function renderizarPills() {
 function renderizarChecklist() {
     const container = document.getElementById("weekChecklist");
     const estadoDoDia = historico[dataSelecionada] || {};
+    const ativos = blocosAtivos();
 
-    container.innerHTML = blocosRastreaveis
+    if (ativos.length === 0) {
+        container.innerHTML = '<p class="heatmap-info">Nenhum bloco está marcado como "Contar na Semana" ainda. Ajuste isso na aba ⚙️.</p>';
+        atualizarMensagemDiaPerfeito();
+        return;
+    }
+
+    container.innerHTML = ativos
         .map(
             (b) => `
             <div class="check-item">
                 <input type="checkbox" data-id="${b.id}" ${estadoDoDia[b.id] ? "checked" : ""}>
                 <div class="check-body">
-                    <div class="check-time">${b.time} · ${b.duracao} min</div>
-                    <div class="check-label">${b.label}</div>
+                    <div class="check-time">${b.start}–${b.end} · ${paraMinutos(b.end) - paraMinutos(b.start)} min</div>
+                    <div class="check-label">${escapeHtml(b.label)}</div>
                     <span class="tag ${b.cat}">${catLabel(b.cat)}</span>
                 </div>
             </div>`
@@ -326,6 +346,7 @@ function renderizarChecklist() {
             renderizarSequencia();
             atualizarMensagemDiaPerfeito();
             atualizarProgressoDoDia();
+            if (typeof renderizarHeatmap === "function") renderizarHeatmap();
         });
     });
 
@@ -339,18 +360,19 @@ function atualizarMensagemDiaPerfeito() {
 
 function renderizarResumoSemana() {
     const barsContainer = document.getElementById("weekBars");
+    const ativos = blocosAtivos();
     let totalMinutosSemana = 0;
-    const maxBlocos = blocosRastreaveis.length;
+    const maxBlocos = ativos.length;
 
     const barrasHtml = DIAS.map((label, i) => {
         const data = datasDaSemana[i];
         const estadoDoDia = historico[data] || {};
         let concluidos = 0;
         let minutos = 0;
-        blocosRastreaveis.forEach((b) => {
+        ativos.forEach((b) => {
             if (estadoDoDia[b.id]) {
                 concluidos++;
-                minutos += b.duracao;
+                minutos += paraMinutos(b.end) - paraMinutos(b.start);
             }
         });
         totalMinutosSemana += minutos;
@@ -389,6 +411,7 @@ function renderizarHeatmap() {
     const ultimoDia = new Date(ano, mes + 1, 0);
     const totalDias = ultimoDia.getDate();
     const offsetInicio = (primeiroDia.getDay() + 6) % 7; // 0 = segunda
+    const ativos = blocosAtivos();
 
     let html = "";
     for (let i = 0; i < offsetInicio; i++) {
@@ -398,10 +421,10 @@ function renderizarHeatmap() {
         const dataObj = new Date(ano, mes, dia);
         const iso = dataISO(dataObj);
         const estado = historico[iso] || {};
-        const concluidos = blocosRastreaveis.filter((b) => estado[b.id]).length;
+        const concluidos = ativos.filter((b) => estado[b.id]).length;
 
         let nivel = "level-0";
-        if (concluidos >= blocosRastreaveis.length) nivel = "perfect";
+        if (ativos.length > 0 && concluidos >= ativos.length) nivel = "perfect";
         else if (concluidos >= 5) nivel = "level-3";
         else if (concluidos >= 3) nivel = "level-2";
         else if (concluidos >= 1) nivel = "level-1";
@@ -417,7 +440,7 @@ function renderizarHeatmap() {
             const [, m, d] = celula.dataset.date.split("-");
             const count = celula.dataset.count;
             document.getElementById("heatmapInfo").textContent =
-                `${d}/${m}: ${count} de ${blocosRastreaveis.length} blocos cumpridos`;
+                `${d}/${m}: ${count} de ${blocosAtivos().length} blocos cumpridos`;
         });
     });
 }
@@ -440,3 +463,100 @@ document.getElementById("mesProximo").addEventListener("click", () => {
 });
 
 renderizarHeatmap();
+
+/* ===================== AJUSTES: editor da rotina ===================== */
+function aposEditarRotina({ reordenarLista = false } = {}) {
+    salvarRotina();
+    renderizarTimeline();
+    renderizarPills();
+    renderizarChecklist();
+    renderizarResumoSemana();
+    renderizarSequencia();
+    atualizarProgressoDoDia();
+    renderizarHeatmap();
+    if (reordenarLista) renderizarAjustes();
+}
+
+function renderizarAjustes() {
+    const container = document.getElementById("rotinaEditor");
+    container.innerHTML = rotina
+        .map(
+            (b) => `
+            <div class="edit-block" data-id="${b.id}">
+                <div class="edit-row">
+                    <input type="time" class="edit-start" value="${b.start}">
+                    <span>–</span>
+                    <input type="time" class="edit-end" value="${b.end}">
+                </div>
+                <input type="text" class="edit-label" value="${escapeHtml(b.label)}" placeholder="Nome do bloco">
+                <div class="edit-row">
+                    <select class="edit-cat">
+                        <option value="estudo" ${b.cat === "estudo" ? "selected" : ""}>Estudo</option>
+                        <option value="leitura" ${b.cat === "leitura" ? "selected" : ""}>Leitura</option>
+                        <option value="trabalho" ${b.cat === "trabalho" ? "selected" : ""}>Trabalho</option>
+                        <option value="rotina" ${b.cat === "rotina" ? "selected" : ""}>Rotina</option>
+                    </select>
+                    <label class="edit-check">
+                        <input type="checkbox" class="edit-rastreavel" ${b.rastreavel ? "checked" : ""}>
+                        Contar na Semana
+                    </label>
+                    <button class="edit-delete" type="button" aria-label="Remover bloco">✕</button>
+                </div>
+            </div>`
+        )
+        .join("");
+
+    container.querySelectorAll(".edit-block").forEach((el) => {
+        const id = el.dataset.id;
+        const bloco = rotina.find((b) => b.id === id);
+        if (!bloco) return;
+
+        el.querySelector(".edit-start").addEventListener("change", (e) => {
+            bloco.start = e.target.value;
+            aposEditarRotina();
+        });
+        el.querySelector(".edit-end").addEventListener("change", (e) => {
+            bloco.end = e.target.value;
+            aposEditarRotina();
+        });
+        el.querySelector(".edit-label").addEventListener("input", (e) => {
+            bloco.label = e.target.value;
+            aposEditarRotina();
+        });
+        el.querySelector(".edit-cat").addEventListener("change", (e) => {
+            bloco.cat = e.target.value;
+            aposEditarRotina();
+        });
+        el.querySelector(".edit-rastreavel").addEventListener("change", (e) => {
+            bloco.rastreavel = e.target.checked;
+            aposEditarRotina();
+        });
+        el.querySelector(".edit-delete").addEventListener("click", () => {
+            rotina = rotina.filter((b) => b.id !== id);
+            aposEditarRotina({ reordenarLista: true });
+        });
+    });
+}
+
+document.getElementById("addBloco").addEventListener("click", () => {
+    rotina.push({
+        id: "bloco-" + Date.now(),
+        start: "12:00",
+        end: "12:30",
+        label: "",
+        cat: "rotina",
+        rastreavel: false,
+    });
+    aposEditarRotina({ reordenarLista: true });
+    const blocos = document.querySelectorAll(".edit-label");
+    if (blocos.length) blocos[blocos.length - 1].focus();
+});
+
+document.getElementById("restaurarPadrao").addEventListener("click", () => {
+    const confirmado = confirm("Isso substitui todos os blocos pela rotina padrão. Seu histórico de dias marcados não é apagado. Continuar?");
+    if (!confirmado) return;
+    rotina = JSON.parse(JSON.stringify(ROTINA_PADRAO));
+    aposEditarRotina({ reordenarLista: true });
+});
+
+renderizarAjustes();
