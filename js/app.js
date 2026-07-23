@@ -170,7 +170,7 @@ function renderizarTimeline() {
 renderizarTimeline();
 setInterval(renderizarTimeline, 60000); // atualiza o destaque "AGORA" a cada minuto
 
-/* ===================== SEMANA: acompanhamento ===================== */
+/* ===================== SEMANA: acompanhamento (por data, permite sequência) ===================== */
 const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 const blocosRastreaveis = [
@@ -182,21 +182,115 @@ const blocosRastreaveis = [
     { id: "leitura-noite", label: "Leitura de lazer", time: "21:40–22:00", duracao: 20, cat: "leitura" },
 ];
 
-let semanaState = carregar("semana-checklist", {});
-let diaAtual = DIAS[(new Date().getDay() + 6) % 7];
-
-function salvarSemana() {
-    salvar("semana-checklist", semanaState);
+function dataISO(d) {
+    return d.toISOString().split("T")[0];
 }
+
+function inicioDaSemana(d) {
+    const copia = new Date(d);
+    const offset = (copia.getDay() + 6) % 7; // 0 = segunda
+    copia.setDate(copia.getDate() - offset);
+    copia.setHours(0, 0, 0, 0);
+    return copia;
+}
+
+const inicioSemanaAtual = inicioDaSemana(new Date());
+const datasDaSemana = DIAS.map((_, i) => {
+    const d = new Date(inicioSemanaAtual);
+    d.setDate(d.getDate() + i);
+    return dataISO(d);
+});
+
+let historico = carregar("historico-blocos", {});
+
+// Migração: aproveita o que já tinha sido marcado no formato antigo (por dia da semana, sem data)
+(function migrarDadosAntigos() {
+    const antigo = carregar("semana-checklist", null);
+    if (!antigo) return;
+    let mudou = false;
+    DIAS.forEach((dia, i) => {
+        const data = datasDaSemana[i];
+        if (antigo[dia] && !historico[data]) {
+            historico[data] = antigo[dia];
+            mudou = true;
+        }
+    });
+    if (mudou) salvar("historico-blocos", historico);
+})();
+
+function salvarHistorico() {
+    salvar("historico-blocos", historico);
+}
+
+function diaCumprido(dataStr) {
+    const estado = historico[dataStr];
+    if (!estado) return false;
+    return Object.values(estado).some((v) => v);
+}
+
+function diaPerfeito(dataStr) {
+    const estado = historico[dataStr];
+    if (!estado) return false;
+    return blocosRastreaveis.every((b) => estado[b.id]);
+}
+
+function calcularSequenciaAtual() {
+    let cursor = new Date();
+    if (!diaCumprido(dataISO(cursor))) {
+        cursor.setDate(cursor.getDate() - 1);
+    }
+    let sequencia = 0;
+    while (diaCumprido(dataISO(cursor))) {
+        sequencia++;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+    return sequencia;
+}
+
+function calcularRecorde() {
+    const datasCumpridas = Object.keys(historico)
+        .filter((d) => diaCumprido(d))
+        .sort();
+    let melhor = 0;
+    let atual = 0;
+    let dataAnterior = null;
+    datasCumpridas.forEach((d) => {
+        if (dataAnterior) {
+            const diff = Math.round((new Date(d) - new Date(dataAnterior)) / 86400000);
+            atual = diff === 1 ? atual + 1 : 1;
+        } else {
+            atual = 1;
+        }
+        melhor = Math.max(melhor, atual);
+        dataAnterior = d;
+    });
+    return Math.max(melhor, calcularSequenciaAtual());
+}
+
+function renderizarSequencia() {
+    document.getElementById("streakAtual").textContent = calcularSequenciaAtual();
+    document.getElementById("streakRecorde").textContent = calcularRecorde();
+}
+
+let dataSelecionada = dataISO(new Date());
 
 function renderizarPills() {
     const container = document.getElementById("dayPills");
-    container.innerHTML = DIAS.map(
-        (d) => `<div class="pill ${d === diaAtual ? "active" : ""}" data-day="${d}">${d}</div>`
-    ).join("");
+    container.innerHTML = DIAS.map((label, i) => {
+        const data = datasDaSemana[i];
+        const diaDoMes = Number(data.split("-")[2]);
+        const ativa = data === dataSelecionada;
+        const perfeito = diaPerfeito(data);
+        return `
+            <div class="pill ${ativa ? "active" : ""}" data-date="${data}">
+                ${label}
+                <span class="pill-num">${diaDoMes}</span>
+                ${perfeito ? '<span class="pill-flame">🔥</span>' : ""}
+            </div>`;
+    }).join("");
     container.querySelectorAll(".pill").forEach((pill) => {
         pill.addEventListener("click", () => {
-            diaAtual = pill.dataset.day;
+            dataSelecionada = pill.dataset.date;
             renderizarPills();
             renderizarChecklist();
         });
@@ -205,7 +299,7 @@ function renderizarPills() {
 
 function renderizarChecklist() {
     const container = document.getElementById("weekChecklist");
-    const estadoDoDia = semanaState[diaAtual] || {};
+    const estadoDoDia = historico[dataSelecionada] || {};
 
     container.innerHTML = blocosRastreaveis
         .map(
@@ -223,12 +317,22 @@ function renderizarChecklist() {
 
     container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
         cb.addEventListener("change", () => {
-            if (!semanaState[diaAtual]) semanaState[diaAtual] = {};
-            semanaState[diaAtual][cb.dataset.id] = cb.checked;
-            salvarSemana();
+            if (!historico[dataSelecionada]) historico[dataSelecionada] = {};
+            historico[dataSelecionada][cb.dataset.id] = cb.checked;
+            salvarHistorico();
+            renderizarPills();
             renderizarResumoSemana();
+            renderizarSequencia();
+            atualizarMensagemDiaPerfeito();
         });
     });
+
+    atualizarMensagemDiaPerfeito();
+}
+
+function atualizarMensagemDiaPerfeito() {
+    const msg = document.getElementById("perfectDayMsg");
+    msg.textContent = diaPerfeito(dataSelecionada) ? "🎉 Dia perfeito — todos os blocos cumpridos!" : "";
 }
 
 function renderizarResumoSemana() {
@@ -236,8 +340,9 @@ function renderizarResumoSemana() {
     let totalMinutosSemana = 0;
     const maxBlocos = blocosRastreaveis.length;
 
-    const barrasHtml = DIAS.map((d) => {
-        const estadoDoDia = semanaState[d] || {};
+    const barrasHtml = DIAS.map((label, i) => {
+        const data = datasDaSemana[i];
+        const estadoDoDia = historico[data] || {};
         let concluidos = 0;
         let minutos = 0;
         blocosRastreaveis.forEach((b) => {
@@ -251,7 +356,7 @@ function renderizarResumoSemana() {
         return `
             <div class="bar-col">
                 <div class="bar ${concluidos > 0 ? "has-progress" : ""}" style="height:${Math.max(alturaPct, 4)}%"></div>
-                <div class="bar-label">${d}</div>
+                <div class="bar-label">${label}</div>
             </div>`;
     }).join("");
 
@@ -262,3 +367,4 @@ function renderizarResumoSemana() {
 renderizarPills();
 renderizarChecklist();
 renderizarResumoSemana();
+renderizarSequencia();
