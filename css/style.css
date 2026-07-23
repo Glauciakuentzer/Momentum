@@ -71,10 +71,11 @@ body {
     max-width: 430px;
     margin: auto;
     min-height: 100vh;
-    padding: 24px 20px 100px;
+    padding: 24px 20px calc(100px + env(safe-area-inset-bottom));
 }
 header {
     margin-bottom: 30px;
+    padding-top: env(safe-area-inset-top);
 }
 .header-top{
     display:flex;
@@ -160,7 +161,7 @@ footer{
     border-top:1px solid var(--line);
     display:flex;
     justify-content:space-around;
-    padding:18px;
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom));
     transition: background-color .2s ease;
 }
 .tab{
