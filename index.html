@@ -39,8 +39,23 @@
     <!-- ===== SEMANA ===== -->
     <main id="view-semana" class="view">
         <section class="card">
+            <h2>🔥 Sequência</h2>
+            <div class="streak-row">
+                <div class="streak-stat">
+                    <span class="streak-value" id="streakAtual">0</span>
+                    <span class="streak-label">dias seguidos</span>
+                </div>
+                <div class="streak-stat">
+                    <span class="streak-value" id="streakRecorde">0</span>
+                    <span class="streak-label">recorde</span>
+                </div>
+            </div>
+            <p class="streak-note">Conta como dia cumprido quando pelo menos 1 bloco é marcado.</p>
+        </section>
+        <section class="card">
             <h2>📅 Acompanhamento semanal</h2>
             <div class="day-pills" id="dayPills"></div>
+            <p id="perfectDayMsg" class="perfect-day-msg"></p>
             <div id="weekChecklist"></div>
         </section>
         <section class="card">
