@@ -99,23 +99,14 @@ const focusKey = chaveDoDia("foco");
 focusInput.value = carregar(focusKey, "");
 focusInput.addEventListener("input", () => salvar(focusKey, focusInput.value));
 
-/* ===================== HOJE: Progresso ===================== */
+/* ===================== HOJE: Progresso (calculado a partir dos blocos de hoje, ver seção SEMANA) ===================== */
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
-
-function atualizarProgresso(itens) {
-    const total = itens.length;
-    const feitas = itens.filter((i) => i.done).length;
-    const pct = total === 0 ? 0 : Math.round((feitas / total) * 100);
-    progressBar.style.width = pct + "%";
-    progressText.textContent = pct + "%";
-}
 
 criarGerenciadorDeTarefas(
     document.getElementById("tasks"),
     document.getElementById("addTask"),
-    chaveDoDia("tarefas"),
-    atualizarProgresso
+    chaveDoDia("tarefas")
 );
 
 /* ===================== PROJETOS ===================== */
@@ -234,6 +225,16 @@ function diaPerfeito(dataStr) {
     return blocosRastreaveis.every((b) => estado[b.id]);
 }
 
+function atualizarProgressoDoDia() {
+    const hojeISO = dataISO(new Date());
+    const estado = historico[hojeISO] || {};
+    const total = blocosRastreaveis.length;
+    const feitos = blocosRastreaveis.filter((b) => estado[b.id]).length;
+    const pct = total === 0 ? 0 : Math.round((feitos / total) * 100);
+    progressBar.style.width = pct + "%";
+    progressText.textContent = pct + "%";
+}
+
 function calcularSequenciaAtual() {
     let cursor = new Date();
     if (!diaCumprido(dataISO(cursor))) {
@@ -324,6 +325,7 @@ function renderizarChecklist() {
             renderizarResumoSemana();
             renderizarSequencia();
             atualizarMensagemDiaPerfeito();
+            atualizarProgressoDoDia();
         });
     });
 
@@ -368,3 +370,4 @@ renderizarPills();
 renderizarChecklist();
 renderizarResumoSemana();
 renderizarSequencia();
+atualizarProgressoDoDia();
